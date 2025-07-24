@@ -34,110 +34,95 @@
     <h3>Weekly Average: $<span id="average">0.00</span></h3>
   </div>
 
- <script>
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+  <script>
+    window.onload = function () {
+      const firebaseConfig = {
+        apiKey: "AIzaSyBOMK1trQZ5Ybaq11f6nx7_L1_vsdhvQnA",
+        authDomain: "pay-tracker-d6145.firebaseapp.com",
+        projectId: "pay-tracker-d6145",
+        storageBucket: "pay-tracker-d6145.appspot.com",
+        messagingSenderId: "915657691207",
+        appId: "1:915657691207:web:d13bacb0e6044df875e162",
+        measurementId: "G-EE1G4QRWQV"
+      };
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyBOMK1trQZ5Ybaq11f6nx7_L1_vsdhvQnA",
-  authDomain: "pay-tracker-d6145.firebaseapp.com",
-  projectId: "pay-tracker-d6145",
-  storageBucket: "pay-tracker-d6145.firebasestorage.app",
-  messagingSenderId: "915657691207",
-  appId: "1:915657691207:web:d13bacb0e6044df875e162",
-  measurementId: "G-EE1G4QRWQV"
-};
+      firebase.initializeApp(firebaseConfig);
+      const auth = firebase.auth();
+      const db = firebase.firestore();
+      let currentUser = null;
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-
-  // Initialize Firebase
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.firestore();
-  let currentUser = null;
-
-  // Auth State Listener
-  auth.onAuthStateChanged(user => {
-    if (user) {
-      currentUser = user;
-      document.getElementById("authSection").style.display = "none";
-      document.getElementById("trackerSection").style.display = "block";
-      loadHistory();
-    } else {
-      currentUser = null;
-      document.getElementById("authSection").style.display = "block";
-      document.getElementById("trackerSection").style.display = "none";
-    }
-  });
-
-  // Register
-  window.register = function () {
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-    auth.createUserWithEmailAndPassword(email, password)
-      .catch(err => document.getElementById("authMessage").innerText = err.message);
-  }
-
-  // Login
-  window.login = function () {
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-    auth.signInWithEmailAndPassword(email, password)
-      .catch(err => document.getElementById("authMessage").innerText = err.message);
-  }
-
-  // Logout
-  window.logout = function () {
-    auth.signOut();
-  }
-
-  // Add Entry
-  window.addEntry = function () {
-    const base = parseFloat(document.getElementById('baseHours').value || 0) * 13.28;
-    const evening = parseFloat(document.getElementById('eveningHours').value || 0) * 16.60;
-    const saturday = parseFloat(document.getElementById('saturdayHours').value || 0) * 16.60;
-    const sunday = parseFloat(document.getElementById('sundayHours').value || 0) * 19.92;
-    const total = base + evening + saturday + sunday;
-
-    db.collection("users").doc(currentUser.uid).collection("entries").add({
-      amount: total,
-      timestamp: new Date()
-    }).then(() => {
-      loadHistory();
-      document.getElementById('baseHours').value = '';
-      document.getElementById('eveningHours').value = '';
-      document.getElementById('saturdayHours').value = '';
-      document.getElementById('sundayHours').value = '';
-    });
-  }
-
-  function loadHistory() {
-    db.collection("users").doc(currentUser.uid).collection("entries")
-      .orderBy("timestamp", "desc")
-      .get()
-      .then(snapshot => {
-        const historyList = document.getElementById("history");
-        historyList.innerHTML = "";
-        let total = 0;
-        let count = 0;
-        snapshot.forEach(doc => {
-          const entry = doc.data().amount;
-          total += entry;
-          count++;
-          const li = document.createElement("li");
-          li.textContent = `$${entry.toFixed(2)}`;
-          historyList.appendChild(li);
-        });
-        const avg = (count > 0) ? (total / count).toFixed(2) : "0.00";
-        document.getElementById("average").innerText = avg;
+      auth.onAuthStateChanged(user => {
+        if (user) {
+          currentUser = user;
+          document.getElementById("authSection").style.display = "none";
+          document.getElementById("trackerSection").style.display = "block";
+          loadHistory();
+        } else {
+          currentUser = null;
+          document.getElementById("authSection").style.display = "block";
+          document.getElementById("trackerSection").style.display = "none";
+        }
       });
-  }
-};
-</script>
+
+      window.register = function () {
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+        auth.createUserWithEmailAndPassword(email, password)
+          .catch(err => document.getElementById("authMessage").innerText = err.message);
+      }
+
+      window.login = function () {
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+        auth.signInWithEmailAndPassword(email, password)
+          .catch(err => document.getElementById("authMessage").innerText = err.message);
+      }
+
+      window.logout = function () {
+        auth.signOut();
+      }
+
+      window.addEntry = function () {
+        const base = parseFloat(document.getElementById('baseHours').value || 0) * 13.28;
+        const evening = parseFloat(document.getElementById('eveningHours').value || 0) * 16.60;
+        const saturday = parseFloat(document.getElementById('saturdayHours').value || 0) * 16.60;
+        const sunday = parseFloat(document.getElementById('sundayHours').value || 0) * 19.92;
+        const total = base + evening + saturday + sunday;
+
+        db.collection("users").doc(currentUser.uid).collection("entries").add({
+          amount: total,
+          timestamp: new Date()
+        }).then(() => {
+          loadHistory();
+          document.getElementById('baseHours').value = '';
+          document.getElementById('eveningHours').value = '';
+          document.getElementById('saturdayHours').value = '';
+          document.getElementById('sundayHours').value = '';
+        });
+      }
+
+      function loadHistory() {
+        db.collection("users").doc(currentUser.uid).collection("entries")
+          .orderBy("timestamp", "desc")
+          .get()
+          .then(snapshot => {
+            const historyList = document.getElementById("history");
+            historyList.innerHTML = "";
+            let total = 0;
+            let count = 0;
+            snapshot.forEach(doc => {
+              const entry = doc.data().amount;
+              total += entry;
+              count++;
+              const li = document.createElement("li");
+              li.textContent = `$${entry.toFixed(2)}`;
+              historyList.appendChild(li);
+            });
+            const avg = (count > 0) ? (total / count).toFixed(2) : "0.00";
+            document.getElementById("average").innerText = avg;
+          });
+      }
+    };
+  </script>
+</body>
+</html>
