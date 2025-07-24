@@ -1,128 +1,181 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Pay Tracker with Firebase</title>
+  <title>Weekly Pay Tracker with Login</title>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <style>
+    table, th, td {
+      border: 1px solid black;
+      border-collapse: collapse;
+      padding: 4px;
+      text-align: center;
+    }
+  </style>
 </head>
 <body>
-  <h1>Pay Tracker</h1>
+  <h1>Weekly Pay Tracker</h1>
 
-  <!-- Login/Register Section -->
   <div id="authSection">
     <h2>Login or Register</h2>
     <input type="email" id="email" placeholder="Email">
     <input type="password" id="password" placeholder="Password">
     <button onclick="login()">Login</button>
     <button onclick="register()">Register</button>
-    <p id="authMessage" style="color: red;"></p>
+    <p id="authMessage"></p>
   </div>
 
-  <!-- Tracker Section -->
   <div id="trackerSection" style="display:none;">
-    <h2>Enter Your Hours</h2>
-    Base Hours ($13.28): <input type="number" id="baseHours" step="0.01"><br>
-    After 6pm Hours ($16.60): <input type="number" id="eveningHours" step="0.01"><br>
-    Saturday Hours ($16.60): <input type="number" id="saturdayHours" step="0.01"><br>
-    Sunday Hours ($19.92): <input type="number" id="sundayHours" step="0.01"><br>
-    <button onclick="addEntry()">Add Entry</button>
+    <h2>Enter Hours (Mon–Sun)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Pay Rate</th>
+          <th>Monday</th>
+          <th>Tuesday</th>
+          <th>Wednesday</th>
+          <th>Thursday</th>
+          <th>Friday</th>
+          <th>Saturday</th>
+          <th>Sunday</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Base ($13.28)</td>
+          <td><input type="number" id="mon_base"></td>
+          <td><input type="number" id="tue_base"></td>
+          <td><input type="number" id="wed_base"></td>
+          <td><input type="number" id="thu_base"></td>
+          <td><input type="number" id="fri_base"></td>
+          <td><input type="number" id="sat_base"></td>
+          <td><input type="number" id="sun_base"></td>
+        </tr>
+        <tr>
+          <td>After 6pm ($16.60)</td>
+          <td><input type="number" id="mon_evening"></td>
+          <td><input type="number" id="tue_evening"></td>
+          <td><input type="number" id="wed_evening"></td>
+          <td><input type="number" id="thu_evening"></td>
+          <td><input type="number" id="fri_evening"></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>Saturday ($16.60)</td>
+          <td></td><td></td><td></td><td></td><td></td>
+          <td><input type="number" id="sat_saturday"></td><td></td>
+        </tr>
+        <tr>
+          <td>Sunday ($19.92)</td>
+          <td></td><td></td><td></td><td></td><td></td><td></td>
+          <td><input type="number" id="sun_sunday"></td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <button onclick="addWeekEntry()">Submit Week</button>
     <button onclick="logout()">Logout</button>
 
-    <h3>History</h3>
+    <h3>Weekly History</h3>
     <ul id="history"></ul>
-    <h3>Weekly Average: $<span id="average">0.00</span></h3>
+    <h3>Average Weekly Total: $<span id="average">0.00</span></h3>
   </div>
 
   <script>
-    window.onload = function () {
-      const firebaseConfig = {
-        apiKey: "AIzaSyBOMK1trQZ5Ybaq11f6nx7_L1_vsdhvQnA",
-        authDomain: "pay-tracker-d6145.firebaseapp.com",
-        projectId: "pay-tracker-d6145",
-        storageBucket: "pay-tracker-d6145.appspot.com",
-        messagingSenderId: "915657691207",
-        appId: "1:915657691207:web:d13bacb0e6044df875e162",
-        measurementId: "G-EE1G4QRWQV"
-      };
-
-      firebase.initializeApp(firebaseConfig);
-      const auth = firebase.auth();
-      const db = firebase.firestore();
-      let currentUser = null;
-
-      auth.onAuthStateChanged(user => {
-        if (user) {
-          currentUser = user;
-          document.getElementById("authSection").style.display = "none";
-          document.getElementById("trackerSection").style.display = "block";
-          loadHistory();
-        } else {
-          currentUser = null;
-          document.getElementById("authSection").style.display = "block";
-          document.getElementById("trackerSection").style.display = "none";
-        }
-      });
-
-      window.register = function () {
-        const email = document.getElementById("email").value;
-        const password = document.getElementById("password").value;
-        auth.createUserWithEmailAndPassword(email, password)
-          .catch(err => document.getElementById("authMessage").innerText = err.message);
-      }
-
-      window.login = function () {
-        const email = document.getElementById("email").value;
-        const password = document.getElementById("password").value;
-        auth.signInWithEmailAndPassword(email, password)
-          .catch(err => document.getElementById("authMessage").innerText = err.message);
-      }
-
-      window.logout = function () {
-        auth.signOut();
-      }
-
-      window.addEntry = function () {
-        const base = parseFloat(document.getElementById('baseHours').value || 0) * 13.28;
-        const evening = parseFloat(document.getElementById('eveningHours').value || 0) * 16.60;
-        const saturday = parseFloat(document.getElementById('saturdayHours').value || 0) * 16.60;
-        const sunday = parseFloat(document.getElementById('sundayHours').value || 0) * 19.92;
-        const total = base + evening + saturday + sunday;
-
-        db.collection("users").doc(currentUser.uid).collection("entries").add({
-          amount: total,
-          timestamp: new Date()
-        }).then(() => {
-          loadHistory();
-          document.getElementById('baseHours').value = '';
-          document.getElementById('eveningHours').value = '';
-          document.getElementById('saturdayHours').value = '';
-          document.getElementById('sundayHours').value = '';
-        });
-      }
-
-      function loadHistory() {
-        db.collection("users").doc(currentUser.uid).collection("entries")
-          .orderBy("timestamp", "desc")
-          .get()
-          .then(snapshot => {
-            const historyList = document.getElementById("history");
-            historyList.innerHTML = "";
-            let total = 0;
-            let count = 0;
-            snapshot.forEach(doc => {
-              const entry = doc.data().amount;
-              total += entry;
-              count++;
-              const li = document.createElement("li");
-              li.textContent = `$${entry.toFixed(2)}`;
-              historyList.appendChild(li);
-            });
-            const avg = (count > 0) ? (total / count).toFixed(2) : "0.00";
-            document.getElementById("average").innerText = avg;
-          });
-      }
+    const firebaseConfig = {
+      apiKey: "AIzaSyBOMK1trQZ5Ybaq11f6nx7_L1_vsdhvQnA",
+      authDomain: "pay-tracker-d6145.firebaseapp.com",
+      projectId: "pay-tracker-d6145",
+      storageBucket: "pay-tracker-d6145.firebasestorage.app",
+      messagingSenderId: "915657691207",
+      appId: "1:915657691207:web:d13bacb0e6044df875e162",
+      measurementId: "G-EE1G4QRWQV"
     };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    let currentUser = null;
+
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        currentUser = user;
+        document.getElementById("authSection").style.display = "none";
+        document.getElementById("trackerSection").style.display = "block";
+        loadHistory();
+      } else {
+        currentUser = null;
+        document.getElementById("authSection").style.display = "block";
+        document.getElementById("trackerSection").style.display = "none";
+      }
+    });
+
+    function login() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      auth.signInWithEmailAndPassword(email, password)
+        .catch(err => document.getElementById("authMessage").innerText = err.message);
+    }
+
+    function register() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      auth.createUserWithEmailAndPassword(email, password)
+        .catch(err => document.getElementById("authMessage").innerText = err.message);
+    }
+
+    function logout() {
+      auth.signOut();
+    }
+
+    function getInput(id) {
+      return parseFloat(document.getElementById(id)?.value || 0);
+    }
+
+    function addWeekEntry() {
+      const rate = {
+        base: 13.28,
+        evening: 16.60,
+        saturday: 16.60,
+        sunday: 19.92
+      };
+      const days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+      let total = 0;
+
+      for (const day of days) {
+        total += getInput(`${day}_base`) * rate.base;
+        total += getInput(`${day}_evening`) * rate.evening;
+        if (day === "sat") total += getInput(`${day}_saturday`) * rate.saturday;
+        if (day === "sun") total += getInput(`${day}_sunday`) * rate.sunday;
+      }
+
+      db.collection("users").doc(currentUser.uid).collection("entries").add({
+        total,
+        timestamp: new Date()
+      }).then(loadHistory);
+    }
+
+    function loadHistory() {
+      db.collection("users").doc(currentUser.uid).collection("entries")
+        .orderBy("timestamp", "desc")
+        .get()
+        .then(snapshot => {
+          const list = document.getElementById("history");
+          list.innerHTML = "";
+          let total = 0, count = 0;
+          snapshot.forEach(doc => {
+            const amount = doc.data().total;
+            total += amount;
+            count++;
+            const li = document.createElement("li");
+            li.textContent = `$${amount.toFixed(2)}`;
+            list.appendChild(li);
+          });
+          document.getElementById("average").innerText = (total / count || 0).toFixed(2);
+        });
+    }
   </script>
 </body>
 </html>
