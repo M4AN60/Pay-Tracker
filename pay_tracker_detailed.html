@@ -1,0 +1,40 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Flexible Pay Calculator</title>
+</head>
+<body>
+  <h1>Pay Tracker (Detailed Rates)</h1>
+  <form id="payForm">
+    Base Hours (Weekday before 6pm - $13.28): <input type="number" id="baseHours" step="0.01" required><br>
+    Weekday After 6pm Hours ($16.60): <input type="number" id="eveningHours" step="0.01"><br>
+    Saturday Hours ($16.60): <input type="number" id="saturdayHours" step="0.01"><br>
+    Sunday Hours ($19.92): <input type="number" id="sundayHours" step="0.01"><br>
+    <button type="submit">Add Entry</button>
+  </form>
+
+  <h2>History</h2>
+  <ul id="history"></ul>
+  <h3>Weekly Average: $<span id="average">0.00</span></h3>
+
+  <script>
+    const history = [];
+    document.getElementById('payForm').onsubmit = function(e) {
+      e.preventDefault();
+      const base = parseFloat(document.getElementById('baseHours').value) * 13.28;
+      const evening = parseFloat(document.getElementById('eveningHours').value || 0) * 16.60;
+      const saturday = parseFloat(document.getElementById('saturdayHours').value || 0) * 16.60;
+      const sunday = parseFloat(document.getElementById('sundayHours').value || 0) * 19.92;
+
+      const total = base + evening + saturday + sunday;
+      history.push(total);
+      const avg = history.reduce((a, b) => a + b, 0) / history.length;
+
+      document.getElementById('history').innerHTML += `<li>$${total.toFixed(2)}</li>`;
+      document.getElementById('average').textContent = avg.toFixed(2);
+      e.target.reset();
+    };
+  </script>
+</body>
+</html>
