@@ -34,8 +34,8 @@
     <h3>Weekly Average: $<span id="average">0.00</span></h3>
   </div>
 
-  <script>
-  // Import the functions you need from the SDKs you need
+ <script>
+// Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 // TODO: Add SDKs for Firebase products that you want to use
@@ -57,90 +57,87 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-    let currentUser = null;
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+  let currentUser = null;
 
-    // Auth State Listener
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        currentUser = user;
-        document.getElementById("authSection").style.display = "none";
-        document.getElementById("trackerSection").style.display = "block";
-        loadHistory();
-      } else {
-        currentUser = null;
-        document.getElementById("authSection").style.display = "block";
-        document.getElementById("trackerSection").style.display = "none";
-      }
+  // Auth State Listener
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      currentUser = user;
+      document.getElementById("authSection").style.display = "none";
+      document.getElementById("trackerSection").style.display = "block";
+      loadHistory();
+    } else {
+      currentUser = null;
+      document.getElementById("authSection").style.display = "block";
+      document.getElementById("trackerSection").style.display = "none";
+    }
+  });
+
+  // Register
+  window.register = function () {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    auth.createUserWithEmailAndPassword(email, password)
+      .catch(err => document.getElementById("authMessage").innerText = err.message);
+  }
+
+  // Login
+  window.login = function () {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    auth.signInWithEmailAndPassword(email, password)
+      .catch(err => document.getElementById("authMessage").innerText = err.message);
+  }
+
+  // Logout
+  window.logout = function () {
+    auth.signOut();
+  }
+
+  // Add Entry
+  window.addEntry = function () {
+    const base = parseFloat(document.getElementById('baseHours').value || 0) * 13.28;
+    const evening = parseFloat(document.getElementById('eveningHours').value || 0) * 16.60;
+    const saturday = parseFloat(document.getElementById('saturdayHours').value || 0) * 16.60;
+    const sunday = parseFloat(document.getElementById('sundayHours').value || 0) * 19.92;
+    const total = base + evening + saturday + sunday;
+
+    db.collection("users").doc(currentUser.uid).collection("entries").add({
+      amount: total,
+      timestamp: new Date()
+    }).then(() => {
+      loadHistory();
+      document.getElementById('baseHours').value = '';
+      document.getElementById('eveningHours').value = '';
+      document.getElementById('saturdayHours').value = '';
+      document.getElementById('sundayHours').value = '';
     });
+  }
 
-    // Register
-    function register() {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      auth.createUserWithEmailAndPassword(email, password)
-        .catch(err => document.getElementById("authMessage").innerText = err.message);
-    }
-
-    // Login
-    function login() {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      auth.signInWithEmailAndPassword(email, password)
-        .catch(err => document.getElementById("authMessage").innerText = err.message);
-    }
-
-    // Logout
-    function logout() {
-      auth.signOut();
-    }
-
-    // Add Entry
-    function addEntry() {
-      const base = parseFloat(document.getElementById('baseHours').value || 0) * 13.28;
-      const evening = parseFloat(document.getElementById('eveningHours').value || 0) * 16.60;
-      const saturday = parseFloat(document.getElementById('saturdayHours').value || 0) * 16.60;
-      const sunday = parseFloat(document.getElementById('sundayHours').value || 0) * 19.92;
-      const total = base + evening + saturday + sunday;
-
-      db.collection("users").doc(currentUser.uid).collection("entries").add({
-        amount: total,
-        timestamp: new Date()
-      }).then(() => {
-        loadHistory();
-        // Reset form
-        document.getElementById('baseHours').value = '';
-        document.getElementById('eveningHours').value = '';
-        document.getElementById('saturdayHours').value = '';
-        document.getElementById('sundayHours').value = '';
-      });
-    }
-
-    // Load History
-    function loadHistory() {
-      db.collection("users").doc(currentUser.uid).collection("entries")
-        .orderBy("timestamp", "desc")
-        .get()
-        .then(snapshot => {
-          const historyList = document.getElementById("history");
-          historyList.innerHTML = "";
-          let total = 0;
-          let count = 0;
-          snapshot.forEach(doc => {
-            const entry = doc.data().amount;
-            total += entry;
-            count++;
-            const li = document.createElement("li");
-            li.textContent = `$${entry.toFixed(2)}`;
-            historyList.appendChild(li);
-          });
-          const avg = (count > 0) ? (total / count).toFixed(2) : "0.00";
-          document.getElementById("average").innerText = avg;
+  function loadHistory() {
+    db.collection("users").doc(currentUser.uid).collection("entries")
+      .orderBy("timestamp", "desc")
+      .get()
+      .then(snapshot => {
+        const historyList = document.getElementById("history");
+        historyList.innerHTML = "";
+        let total = 0;
+        let count = 0;
+        snapshot.forEach(doc => {
+          const entry = doc.data().amount;
+          total += entry;
+          count++;
+          const li = document.createElement("li");
+          li.textContent = `$${entry.toFixed(2)}`;
+          historyList.appendChild(li);
         });
-    }
-  </script>
-</body>
-</html>
+        const avg = (count > 0) ? (total / count).toFixed(2) : "0.00";
+        document.getElementById("average").innerText = avg;
+      });
+  }
+};
+</script>
