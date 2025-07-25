@@ -20,7 +20,6 @@
 </head>
 <body>
   <h1>Weekly Pay Tracker</h1>
-
   <div id="authSection">
     <h2>Login or Register</h2>
     <input type="email" id="email" placeholder="Email">
@@ -137,6 +136,90 @@
     function logout() {
       auth.signOut();
     }
+
+    function getInput(id) {
+      return parseFloat(document.getElementById(id)?.value || 0);
+    }
+
+    function addWeekEntry() {
+      const rate = { base: 13.28, evening: 16.60, saturday: 16.60, sunday: 19.92 };
+      const days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+      let total = 0;
+
+      for (const day of days) {
+        let base = getInput(`${day}_base`);
+        let evening = getInput(`${day}_evening`);
+        let sat = day === "sat" ? getInput(`sat_saturday`) : 0;
+        let sun = day === "sun" ? getInput(`sun_sunday`) : 0;
+        let dailyHours = base + evening + sat + sun;
+        let breakTime = dailyHours >= 6 ? 0.5 : 0;
+        dailyHours -= breakTime;
+
+        total += base * rate.base;
+        total += evening * rate.evening;
+        total += sat * rate.saturday;
+        total += sun * rate.sunday;
+      }
+
+      db.collection("users").doc(currentUser.uid).collection("entries").add({
+        total,
+        timestamp: new Date(),
+        notes: document.getElementById("weekNotes").value,
+        payPeriod: document.getElementById("payPeriod").value
+      }).then(loadHistory);
+    }
+
+    function loadHistory() {
+      db.collection("users").doc(currentUser.uid).collection("entries")
+        .orderBy("timestamp", "desc").get().then(snapshot => {
+          const list = document.getElementById("history");
+          list.innerHTML = "";
+          let total = 0, count = 0;
+          snapshot.forEach(doc => {
+            const amount = doc.data().total;
+            total += amount;
+            count++;
+            const li = document.createElement("li");
+            li.textContent = `$${amount.toFixed(2)} - ${doc.data().payPeriod || ''}`;
+            list.appendChild(li);
+          });
+          document.getElementById("average").innerText = (total / count || 0).toFixed(2);
+        });
+    }
+
+    async function generatePDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+      const inputId = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+      const notes = document.getElementById("weekNotes").value;
+      const payPeriod = document.getElementById("payPeriod").value;
+
+      doc.setFontSize(14);
+      doc.text("Weekly Pay Summary", 20, 20);
+      doc.setFontSize(10);
+      doc.text(`Pay Period: ${payPeriod}`, 20, 28);
+      doc.text(`Notes: ${notes}`, 20, 36);
+
+      let y = 50;
+      doc.text("Day        Hours        Break Deducted", 20, y);
+      y += 8;
+
+      for (let i = 0; i < 7; i++) {
+        const base = getInput(`${inputId[i]}_base`);
+        const evening = getInput(`${inputId[i]}_evening`);
+        const sat = inputId[i] === "sat" ? getInput(`sat_saturday`) : 0;
+        const sun = inputId[i] === "sun" ? getInput(`sun_sunday`) : 0;
+        let totalHours = base + evening + sat + sun;
+        const breakApplied = totalHours >= 6 ? 0.5 : 0;
+        totalHours -= breakApplied;
+        doc.text(`${days[i]}        ${totalHours.toFixed(2)} hrs        ${breakApplied > 0 ? "0.5 hr" : "-"}`, 20, y);
+        y += 8;
+      }
+
+      doc.save("weekly_summary.pdf");
+    }
   </script>
 </body>
 </html>
+
