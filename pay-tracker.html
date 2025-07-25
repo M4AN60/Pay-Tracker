@@ -1,0 +1,142 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Weekly Pay Tracker with Login and PDF</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    table, th, td {
+      border: 1px solid black;
+      border-collapse: collapse;
+      padding: 4px;
+      text-align: center;
+    }
+    input[type='number'] { width: 60px; }
+    textarea { width: 100%; height: 50px; }
+  </style>
+</head>
+<body>
+  <h1>Weekly Pay Tracker</h1>
+
+  <div id="authSection">
+    <h2>Login or Register</h2>
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="login()">Login</button>
+    <button onclick="register()">Register</button>
+    <p id="authMessage"></p>
+  </div>
+
+  <div id="trackerSection" style="display:none;">
+    <h2>Enter Hours (Mon–Sun)</h2>
+    <label>Pay Period Start (DD/MM/YY): <input type="text" id="payPeriod"></label>
+    <table>
+      <thead>
+        <tr>
+          <th>Pay Rate</th>
+          <th>Monday</th>
+          <th>Tuesday</th>
+          <th>Wednesday</th>
+          <th>Thursday</th>
+          <th>Friday</th>
+          <th>Saturday</th>
+          <th>Sunday</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Base ($13.28)</td>
+          <td><input type="number" id="mon_base"></td>
+          <td><input type="number" id="tue_base"></td>
+          <td><input type="number" id="wed_base"></td>
+          <td><input type="number" id="thu_base"></td>
+          <td><input type="number" id="fri_base"></td>
+          <td><input type="number" id="sat_base"></td>
+          <td><input type="number" id="sun_base"></td>
+        </tr>
+        <tr>
+          <td>After 6pm ($16.60)</td>
+          <td><input type="number" id="mon_evening"></td>
+          <td><input type="number" id="tue_evening"></td>
+          <td><input type="number" id="wed_evening"></td>
+          <td><input type="number" id="thu_evening"></td>
+          <td><input type="number" id="fri_evening"></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>Saturday ($16.60)</td>
+          <td></td><td></td><td></td><td></td><td></td>
+          <td><input type="number" id="sat_saturday"></td><td></td>
+        </tr>
+        <tr>
+          <td>Sunday ($19.92)</td>
+          <td></td><td></td><td></td><td></td><td></td><td></td>
+          <td><input type="number" id="sun_sunday"></td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <label>Notes: <textarea id="weekNotes"></textarea></label>
+    <br><br>
+    <button onclick="addWeekEntry()">Submit Week</button>
+    <button onclick="logout()">Logout</button>
+    <button onclick="generatePDF()">Download PDF</button>
+
+    <h3>Weekly History</h3>
+    <ul id="history"></ul>
+    <h3>Average Weekly Total: $<span id="average">0.00</span></h3>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBOMK1trQZ5Ybaq11f6nx7_L1_vsdhvQnA",
+      authDomain: "pay-tracker-d6145.firebaseapp.com",
+      projectId: "pay-tracker-d6145",
+      storageBucket: "pay-tracker-d6145.firebasestorage.app",
+      messagingSenderId: "915657691207",
+      appId: "1:915657691207:web:d13bacb0e6044df875e162",
+      measurementId: "G-EE1G4QRWQV"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    let currentUser = null;
+
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        currentUser = user;
+        document.getElementById("authSection").style.display = "none";
+        document.getElementById("trackerSection").style.display = "block";
+        loadHistory();
+      } else {
+        currentUser = null;
+        document.getElementById("authSection").style.display = "block";
+        document.getElementById("trackerSection").style.display = "none";
+      }
+    });
+
+    function login() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      auth.signInWithEmailAndPassword(email, password)
+        .catch(err => document.getElementById("authMessage").innerText = err.message);
+    }
+
+    function register() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      auth.createUserWithEmailAndPassword(email, password)
+        .catch(err => document.getElementById("authMessage").innerText = err.message);
+    }
+
+    function logout() {
+      auth.signOut();
+    }
+  </script>
+</body>
+</html>
