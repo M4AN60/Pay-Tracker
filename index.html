@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Weekly Pay Tracker with Tax Estimate</title>
+  <title>Weekly Pay Tracker with Login + PDF</title>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
   <style>
     table, th, td {
       border: 1px solid black;
@@ -16,6 +18,7 @@
 </head>
 <body>
   <h1>Weekly Pay Tracker</h1>
+
   <div id="authSection">
     <h2>Login or Register</h2>
     <input type="email" id="email" placeholder="Email">
@@ -133,13 +136,30 @@
       return parseFloat(document.getElementById(id)?.value || 0);
     }
 
-    function calculateWithholding(gross) {
-      if (gross <= 88) return 0;
-      if (gross <= 371) return 0.19 * (gross - 88);
-      if (gross <= 515) return 42 + 0.2342 * (gross - 371);
-      if (gross <= 932) return 103.25 + 0.3477 * (gross - 515);
-      if (gross <= 1380) return 294.25 + 0.345 * (gross - 932);
-      return 711.65 + 0.39 * (gross - 1380);
+    async function generatePDF(startDateStr, notes, dailyBreakdown, gross, tax, net) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      doc.setFontSize(16);
+      doc.text(`Weekly Pay Report`, 14, 20);
+      doc.setFontSize(12);
+      doc.text(`Pay Period: ${startDateStr}`, 14, 30);
+      doc.text(`Notes: ${notes}`, 14, 38);
+
+      const tableData = Object.entries(dailyBreakdown).map(([day, amount]) => [day, `$${amount.toFixed(2)}`]);
+
+      doc.autoTable({
+        head: [["Day", "Earnings"]],
+        body: tableData,
+        startY: 45,
+      });
+
+      let y = doc.autoTable.previous.finalY + 10;
+      doc.text(`Gross Pay: $${gross.toFixed(2)}`, 14, y);
+      doc.text(`Tax Withheld: $${tax.toFixed(2)}`, 14, y + 8);
+      doc.text(`Net Pay: $${net.toFixed(2)}`, 14, y + 16);
+
+      doc.save(`Weekly_Report_${startDateStr.replace(/\//g, '-')}.pdf`);
     }
 
     function addWeekEntry() {
@@ -149,25 +169,57 @@
         saturday: 16.60,
         sunday: 19.92
       };
+
       const days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
       let total = 0;
+      const breakdown = {};
 
       for (const day of days) {
-        total += getInput(`${day}_base`) * rate.base;
-        total += getInput(`${day}_evening`) * rate.evening;
-        if (day === "sat") total += getInput(`${day}_saturday`) * rate.saturday;
-        if (day === "sun") total += getInput(`${day}_sunday`) * rate.sunday;
+        let hours = getInput(`${day}_base`) + getInput(`${day}_evening`);
+        if (day === "sat") hours += getInput(`${day}_saturday`);
+        if (day === "sun") hours += getInput(`${day}_sunday`);
+        if (hours > 8) hours -= 0.5; // 30-minute unpaid break
+
+        let dailyTotal =
+          getInput(`${day}_base`) * rate.base +
+          getInput(`${day}_evening`) * rate.evening +
+          (day === "sat" ? getInput(`${day}_saturday`) * rate.saturday : 0) +
+          (day === "sun" ? getInput(`${day}_sunday`) * rate.sunday : 0);
+
+        if (hours < (getInput(`${day}_base`) + getInput(`${day}_evening`) + (day === "sat" ? getInput(`${day}_saturday`) : 0) + (day === "sun" ? getInput(`${day}_sunday`) : 0))) {
+          dailyTotal -= 0.5 * rate.base;
+        }
+
+        breakdown[day.toUpperCase()] = dailyTotal;
+        total += dailyTotal;
       }
 
-      const withholding = calculateWithholding(total);
-      const net = total - withholding;
+      const weekStart = new Date();
+      weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1); // Start on Monday
+      const weekStartStr = weekStart.toLocaleDateString("en-AU");
+
+      const notes = prompt("Add any notes for this week:");
+
+      const tax = total >= 355 ? (total <= 385 ? 0.19 * (total - 350)
+            : total <= 432 ? 6.65 + 0.2342 * (total - 385)
+            : total <= 538 ? 19.51 + 0.3477 * (total - 432)
+            : total <= 999 ? 53.73 + 0.345 * (total - 538)
+            : 207.97 + 0.39 * (total - 999)) : 0;
+
+      const net = total - tax;
 
       db.collection("users").doc(currentUser.uid).collection("entries").add({
         total,
-        withholding,
+        tax,
         net,
+        notes,
+        breakdown,
+        weekStart: firebase.firestore.Timestamp.fromDate(weekStart),
         timestamp: new Date()
-      }).then(loadHistory);
+      }).then(() => {
+        generatePDF(weekStartStr, notes, breakdown, total, tax, net);
+        loadHistory();
+      });
     }
 
     function loadHistory() {
@@ -179,11 +231,11 @@
           list.innerHTML = "";
           let total = 0, count = 0;
           snapshot.forEach(doc => {
-            const entry = doc.data();
-            total += entry.total;
+            const data = doc.data();
+            total += data.total;
             count++;
             const li = document.createElement("li");
-            li.textContent = `Gross: $${entry.total.toFixed(2)}, Tax: $${entry.withholding.toFixed(2)}, Net: $${entry.net.toFixed(2)}`;
+            li.textContent = `Week ${data.weekStart?.toDate().toLocaleDateString("en-AU") || ""} — Net: $${(data.net || 0).toFixed(2)} | Notes: ${data.notes || ""}`;
             list.appendChild(li);
           });
           document.getElementById("average").innerText = (total / count || 0).toFixed(2);
