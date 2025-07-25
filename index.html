@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Weekly Pay Tracker with Login</title>
+  <title>Weekly Pay Tracker with Login and PDF</title>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
@@ -13,6 +13,8 @@
       padding: 4px;
       text-align: center;
     }
+    input[type='number'] { width: 60px; }
+    textarea { width: 100%; height: 50px; }
   </style>
 </head>
 <body>
@@ -29,8 +31,7 @@
 
   <div id="trackerSection" style="display:none;">
     <h2>Enter Hours (Mon–Sun)</h2>
-    <label>Pay Period (DD/MM/YY - DD/MM/YY): <input id="payPeriod" placeholder="e.g. 22/07/25 - 28/07/25"></label><br><br>
-    <label>Weekly Notes: <input id="weekNotes" placeholder="e.g. Public holiday Monday"></label><br><br>
+    <label>Pay Period Start (DD/MM/YY): <input type="text" id="payPeriod"></label>
     <table>
       <thead>
         <tr>
@@ -78,144 +79,154 @@
       </tbody>
     </table>
     <br>
+    <label>Notes: <textarea id="weekNotes"></textarea></label>
+    <br><br>
     <button onclick="addWeekEntry()">Submit Week</button>
     <button onclick="logout()">Logout</button>
+    <button onclick="generatePDF()">Download PDF</button>
+
     <h3>Weekly History</h3>
     <ul id="history"></ul>
     <h3>Average Weekly Total: $<span id="average">0.00</span></h3>
   </div>
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyBOMK1trQZ5Ybaq11f6nx7_L1_vsdhvQnA",
-    authDomain: "pay-tracker-d6145.firebaseapp.com",
-    projectId: "pay-tracker-d6145",
-    storageBucket: "pay-tracker-d6145.firebasestorage.app",
-    messagingSenderId: "915657691207",
-    appId: "1:915657691207:web:d13bacb0e6044df875e162",
-    measurementId: "G-EE1G4QRWQV"
-  };
-
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.firestore();
-  let currentUser = null;
-
-  auth.onAuthStateChanged(user => {
-    if (user) {
-      currentUser = user;
-      document.getElementById("authSection").style.display = "none";
-      document.getElementById("trackerSection").style.display = "block";
-      loadHistory();
-    } else {
-      currentUser = null;
-      document.getElementById("authSection").style.display = "block";
-      document.getElementById("trackerSection").style.display = "none";
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Weekly Pay Tracker with Login and PDF</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    table, th, td {
+      border: 1px solid black;
+      border-collapse: collapse;
+      padding: 4px;
+      text-align: center;
     }
-  });
+    input[type='number'] { width: 60px; }
+    textarea { width: 100%; height: 50px; }
+  </style>
+</head>
+<body>
+  <h1>Weekly Pay Tracker</h1>
 
-  function login() {
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-    auth.signInWithEmailAndPassword(email, password)
-      .catch(err => document.getElementById("authMessage").innerText = err.message);
-  }
+  <div id="authSection">
+    <h2>Login or Register</h2>
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="login()">Login</button>
+    <button onclick="register()">Register</button>
+    <p id="authMessage"></p>
+  </div>
 
-  function register() {
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-    auth.createUserWithEmailAndPassword(email, password)
-      .catch(err => document.getElementById("authMessage").innerText = err.message);
-  }
+  <div id="trackerSection" style="display:none;">
+    <h2>Enter Hours (Mon–Sun)</h2>
+    <label>Pay Period Start (DD/MM/YY): <input type="text" id="payPeriod"></label>
+    <table>
+      <thead>
+        <tr>
+          <th>Pay Rate</th>
+          <th>Monday</th>
+          <th>Tuesday</th>
+          <th>Wednesday</th>
+          <th>Thursday</th>
+          <th>Friday</th>
+          <th>Saturday</th>
+          <th>Sunday</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Base ($13.28)</td>
+          <td><input type="number" id="mon_base"></td>
+          <td><input type="number" id="tue_base"></td>
+          <td><input type="number" id="wed_base"></td>
+          <td><input type="number" id="thu_base"></td>
+          <td><input type="number" id="fri_base"></td>
+          <td><input type="number" id="sat_base"></td>
+          <td><input type="number" id="sun_base"></td>
+        </tr>
+        <tr>
+          <td>After 6pm ($16.60)</td>
+          <td><input type="number" id="mon_evening"></td>
+          <td><input type="number" id="tue_evening"></td>
+          <td><input type="number" id="wed_evening"></td>
+          <td><input type="number" id="thu_evening"></td>
+          <td><input type="number" id="fri_evening"></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>Saturday ($16.60)</td>
+          <td></td><td></td><td></td><td></td><td></td>
+          <td><input type="number" id="sat_saturday"></td><td></td>
+        </tr>
+        <tr>
+          <td>Sunday ($19.92)</td>
+          <td></td><td></td><td></td><td></td><td></td><td></td>
+          <td><input type="number" id="sun_sunday"></td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <label>Notes: <textarea id="weekNotes"></textarea></label>
+    <br><br>
+    <button onclick="addWeekEntry()">Submit Week</button>
+    <button onclick="logout()">Logout</button>
+    <button onclick="generatePDF()">Download PDF</button>
 
-  function logout() {
-    auth.signOut();
-  }
+    <h3>Weekly History</h3>
+    <ul id="history"></ul>
+    <h3>Average Weekly Total: $<span id="average">0.00</span></h3>
+  </div>
 
-  function getInput(id) {
-    return parseFloat(document.getElementById(id)?.value || 0);
-  }
-
-  function calculateTax(weeklyPay) {
-    const annual = weeklyPay * 52;
-    const taxable = Math.max(0, annual - 18200);
-    const annualTax = taxable * 0.16;
-    return (annualTax / 52).toFixed(2);
-  }
-
-  function addWeekEntry() {
-    const rate = {
-      base: 13.28,
-      evening: 16.60,
-      saturday: 16.60,
-      sunday: 19.92
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBOMK1trQZ5Ybaq11f6nx7_L1_vsdhvQnA",
+      authDomain: "pay-tracker-d6145.firebaseapp.com",
+      projectId: "pay-tracker-d6145",
+      storageBucket: "pay-tracker-d6145.firebasestorage.app",
+      messagingSenderId: "915657691207",
+      appId: "1:915657691207:web:d13bacb0e6044df875e162",
+      measurementId: "G-EE1G4QRWQV"
     };
 
-    const days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
-    let total = 0;
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    let currentUser = null;
 
-    for (const day of days) {
-      let base = getInput(`${day}_base`);
-      let evening = getInput(`${day}_evening`);
-      let sat = day === "sat" ? getInput(`${day}_saturday`) : 0;
-      let sun = day === "sun" ? getInput(`${day}_sunday`) : 0;
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        currentUser = user;
+        document.getElementById("authSection").style.display = "none";
+        document.getElementById("trackerSection").style.display = "block";
+        loadHistory();
+      } else {
+        currentUser = null;
+        document.getElementById("authSection").style.display = "block";
+        document.getElementById("trackerSection").style.display = "none";
+      }
+    });
 
-      const dayTotal = base + evening + sat + sun;
-      if (dayTotal > 8) base -= 0.5; // 30-min unpaid break
-      total += base * rate.base + evening * rate.evening + sat * rate.saturday + sun * rate.sunday;
+    function login() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      auth.signInWithEmailAndPassword(email, password)
+        .catch(err => document.getElementById("authMessage").innerText = err.message);
     }
 
-    const tax = parseFloat(calculateTax(total));
-    const net = total - tax;
-    const weekRange = document.getElementById("payPeriod").value;
-    const notes = document.getElementById("weekNotes").value;
+    function register() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      auth.createUserWithEmailAndPassword(email, password)
+        .catch(err => document.getElementById("authMessage").innerText = err.message);
+    }
 
-    db.collection("users").doc(currentUser.uid).collection("entries").add({
-      gross: total,
-      net: net,
-      tax: tax,
-      weekRange,
-      notes,
-      timestamp: new Date()
-    }).then(loadHistory);
-
-    generateWeeklyPDF(total, net, tax, weekRange, notes);
-  }
-
-  function generateWeeklyPDF(total, net, tax, weekRange, notes) {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    doc.setFontSize(14);
-    doc.text("Weekly Pay Summary", 14, 20);
-    doc.text(`Pay Period: ${weekRange}`, 14, 30);
-    doc.text(`Gross Pay: $${total.toFixed(2)}`, 14, 40);
-    doc.text(`Estimated Tax: $${tax}`, 14, 50);
-    doc.text(`Net Pay: $${net.toFixed(2)}`, 14, 60);
-    doc.text(`Notes: ${notes}`, 14, 70);
-    doc.save(`Weekly_Pay_${weekRange.replace(/\//g, '-')}.pdf`);
-  }
-
-  function loadHistory() {
-    db.collection("users").doc(currentUser.uid).collection("entries")
-      .orderBy("timestamp", "desc")
-      .get()
-      .then(snapshot => {
-        const list = document.getElementById("history");
-        list.innerHTML = "";
-        let total = 0, count = 0;
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          total += data.gross;
-          count++;
-          const li = document.createElement("li");
-          li.innerHTML = `
-            <strong>${data.weekRange}</strong>: $${data.gross.toFixed(2)} (Net: $${data.net.toFixed(2)}, Tax: $${data.tax})
-            <button onclick="generateWeeklyPDF(${data.gross}, ${data.net}, ${data.tax}, '${data.weekRange}', '${data.notes}')">Download PDF</button>
-          `;
-          list.appendChild(li);
-        });
-        document.getElementById("average").innerText = (total / count || 0).toFixed(2);
-      });
-  }
-</script>
+    function logout() {
+      auth.signOut();
+    }
+  </script>
 </body>
 </html>
