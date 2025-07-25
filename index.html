@@ -1,271 +1,221 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Weekly Pay Tracker with Login</title>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js">
- function generateWeeklyPDF(total, net, tax, weekRange, notes) {
- const { jsPDF } = window.jspdf;
- const doc = new jsPDF();
- doc.setFontSize(14);
- doc.text("Weekly Pay Summary", 14, 20);
- doc.text(`Pay Period: ${weekRange}`, 14, 30);
- doc.text(`Gross Pay: $${total.toFixed(2)}`, 14, 40);
- doc.text(`Estimated Tax: $${tax.toFixed(2)}`, 14, 50);
- doc.text(`Net Pay: $${net.toFixed(2)}`, 14, 60);
- doc.text("Notes:", 14, 70);
- doc.text(notes, 14, 80);
- doc.save(`Weekly_Pay_Report_${weekRange.replace(/\//g, "-")}.pdf`);
- }
- function calculateTax(income) {
- const threshold = 18200;
- if (income <= threshold) return 0;
- const taxable = income - threshold;
- return taxable * 0.16 / 52; // Weekly tax based on annual taxable income
- }
-</script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js">
- function generateWeeklyPDF(total, net, tax, weekRange, notes) {
- const { jsPDF } = window.jspdf;
- const doc = new jsPDF();
- doc.setFontSize(14);
- doc.text("Weekly Pay Summary", 14, 20);
- doc.text(`Pay Period: ${weekRange}`, 14, 30);
- doc.text(`Gross Pay: $${total.toFixed(2)}`, 14, 40);
- doc.text(`Estimated Tax: $${tax.toFixed(2)}`, 14, 50);
- doc.text(`Net Pay: $${net.toFixed(2)}`, 14, 60);
- doc.text("Notes:", 14, 70);
- doc.text(notes, 14, 80);
- doc.save(`Weekly_Pay_Report_${weekRange.replace(/\//g, "-")}.pdf`);
- }
- function calculateTax(income) {
- const threshold = 18200;
- if (income <= threshold) return 0;
- const taxable = income - threshold;
- return taxable * 0.16 / 52; // Weekly tax based on annual taxable income
- }
-</script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js">
- function generateWeeklyPDF(total, net, tax, weekRange, notes) {
- const { jsPDF } = window.jspdf;
- const doc = new jsPDF();
- doc.setFontSize(14);
- doc.text("Weekly Pay Summary", 14, 20);
- doc.text(`Pay Period: ${weekRange}`, 14, 30);
- doc.text(`Gross Pay: $${total.toFixed(2)}`, 14, 40);
- doc.text(`Estimated Tax: $${tax.toFixed(2)}`, 14, 50);
- doc.text(`Net Pay: $${net.toFixed(2)}`, 14, 60);
- doc.text("Notes:", 14, 70);
- doc.text(notes, 14, 80);
- doc.save(`Weekly_Pay_Report_${weekRange.replace(/\//g, "-")}.pdf`);
- }
- function calculateTax(income) {
- const threshold = 18200;
- if (income <= threshold) return 0;
- const taxable = income - threshold;
- return taxable * 0.16 / 52; // Weekly tax based on annual taxable income
- }
-</script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js">
- function generateWeeklyPDF(total, net, tax, weekRange, notes) {
- const { jsPDF } = window.jspdf;
- const doc = new jsPDF();
- doc.setFontSize(14);
- doc.text("Weekly Pay Summary", 14, 20);
- doc.text(`Pay Period: ${weekRange}`, 14, 30);
- doc.text(`Gross Pay: $${total.toFixed(2)}`, 14, 40);
- doc.text(`Estimated Tax: $${tax.toFixed(2)}`, 14, 50);
- doc.text(`Net Pay: $${net.toFixed(2)}`, 14, 60);
- doc.text("Notes:", 14, 70);
- doc.text(notes, 14, 80);
- doc.save(`Weekly_Pay_Report_${weekRange.replace(/\//g, "-")}.pdf`);
- }
- function calculateTax(income) {
- const threshold = 18200;
- if (income <= threshold) return 0;
- const taxable = income - threshold;
- return taxable * 0.16 / 52; // Weekly tax based on annual taxable income
- }
-</script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js">
- function generateWeeklyPDF(total, net, tax, weekRange, notes) {
- const { jsPDF } = window.jspdf;
- const doc = new jsPDF();
- doc.setFontSize(14);
- doc.text("Weekly Pay Summary", 14, 20);
- doc.text(`Pay Period: ${weekRange}`, 14, 30);
- doc.text(`Gross Pay: $${total.toFixed(2)}`, 14, 40);
- doc.text(`Estimated Tax: $${tax.toFixed(2)}`, 14, 50);
- doc.text(`Net Pay: $${net.toFixed(2)}`, 14, 60);
- doc.text("Notes:", 14, 70);
- doc.text(notes, 14, 80);
- doc.save(`Weekly_Pay_Report_${weekRange.replace(/\//g, "-")}.pdf`);
- }
- function calculateTax(income) {
- const threshold = 18200;
- if (income <= threshold) return 0;
- const taxable = income - threshold;
- return taxable * 0.16 / 52; // Weekly tax based on annual taxable income
- }
-</script>
-<style>
- table, th, td {
- border: 1px solid black;
- border-collapse: collapse;
- padding: 4px;
- text-align: center;
- }
- </style>
+  <title>Weekly Pay Tracker with Login</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    table, th, td {
+      border: 1px solid black;
+      border-collapse: collapse;
+      padding: 4px;
+      text-align: center;
+    }
+  </style>
 </head>
 <body>
-<h1>Weekly Pay Tracker</h1>
+  <h1>Weekly Pay Tracker</h1>
+
+  <div id="authSection">
+    <h2>Login or Register</h2>
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="login()">Login</button>
+    <button onclick="register()">Register</button>
+    <p id="authMessage"></p>
+  </div>
+
+  <div id="trackerSection" style="display:none;">
+    <h2>Enter Hours (Mon–Sun)</h2>
+    <label>Pay Period (DD/MM/YY - DD/MM/YY): <input id="payPeriod" placeholder="e.g. 22/07/25 - 28/07/25"></label><br><br>
+    <label>Weekly Notes: <input id="weekNotes" placeholder="e.g. Public holiday Monday"></label><br><br>
+    <table>
+      <thead>
+        <tr>
+          <th>Pay Rate</th>
+          <th>Monday</th>
+          <th>Tuesday</th>
+          <th>Wednesday</th>
+          <th>Thursday</th>
+          <th>Friday</th>
+          <th>Saturday</th>
+          <th>Sunday</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Base ($13.28)</td>
+          <td><input type="number" id="mon_base"></td>
+          <td><input type="number" id="tue_base"></td>
+          <td><input type="number" id="wed_base"></td>
+          <td><input type="number" id="thu_base"></td>
+          <td><input type="number" id="fri_base"></td>
+          <td><input type="number" id="sat_base"></td>
+          <td><input type="number" id="sun_base"></td>
+        </tr>
+        <tr>
+          <td>After 6pm ($16.60)</td>
+          <td><input type="number" id="mon_evening"></td>
+          <td><input type="number" id="tue_evening"></td>
+          <td><input type="number" id="wed_evening"></td>
+          <td><input type="number" id="thu_evening"></td>
+          <td><input type="number" id="fri_evening"></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>Saturday ($16.60)</td>
+          <td></td><td></td><td></td><td></td><td></td>
+          <td><input type="number" id="sat_saturday"></td><td></td>
+        </tr>
+        <tr>
+          <td>Sunday ($19.92)</td>
+          <td></td><td></td><td></td><td></td><td></td><td></td>
+          <td><input type="number" id="sun_sunday"></td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <button onclick="addWeekEntry()">Submit Week</button>
+    <button onclick="logout()">Logout</button>
+    <h3>Weekly History</h3>
+    <ul id="history"></ul>
+    <h3>Average Weekly Total: $<span id="average">0.00</span></h3>
+  </div>
 <script>
- const firebaseConfig = {
- apiKey: "AIzaSyBOMK1trQZ5Ybaq11f6nx7_L1_vsdhvQnA",
- authDomain: "pay-tracker-d6145.firebaseapp.com",
- projectId: "pay-tracker-d6145",
- storageBucket: "pay-tracker-d6145.firebasestorage.app",
- messagingSenderId: "915657691207",
- appId: "1:915657691207:web:d13bacb0e6044df875e162",
- measurementId: "G-EE1G4QRWQV"
- };
- firebase.initializeApp(firebaseConfig);
- const auth = firebase.auth();
- const db = firebase.firestore();
- let currentUser = null;
- auth.onAuthStateChanged(user => {
- if (user) {
- currentUser = user;
- document.getElementById("authSection").style.display = "none";
- document.getElementById("trackerSection").style.display = "block";
- loadHistory();
- } else {
- currentUser = null;
- document.getElementById("authSection").style.display = "block";
- document.getElementById("trackerSection").style.display = "none";
- }
- });
- function login() {
- const email = document.getElementById("email").value;
- const password = document.getElementById("password").value;
- auth.signInWithEmailAndPassword(email, password)
- .catch(err => document.getElementById("authMessage").innerText = err.message);
- }
- function register() {
- const email = document.getElementById("email").value;
- const password = document.getElementById("password").value;
- auth.createUserWithEmailAndPassword(email, password)
- .catch(err => document.getElementById("authMessage").innerText = err.message);
- }
- function logout() {
- auth.signOut();
- }
- function getInput(id) {
- return parseFloat(document.getElementById(id)?.value || 0);
- }
- async function generatePDF(startDateStr, notes, dailyBreakdown, gross, tax, net) {
- const { jsPDF } = window.jspdf;
- const doc = new jsPDF();
- doc.setFontSize(16);
- doc.text(`Weekly Pay Report`, 14, 20);
- doc.setFontSize(12);
- doc.text(`Pay Period: ${startDateStr}`, 14, 30);
- doc.text(`Notes: ${notes}`, 14, 38);
- const tableData = Object.entries(dailyBreakdown).map(([day, amount]) => [day, `$${amount.toFixed(2)}`]);
- doc.autoTable({ head: [["Day", "Earnings"]], body: tableData, startY: 45 });
- let y = doc.autoTable.previous.finalY + 10;
- doc.text(`Gross Pay: $${gross.toFixed(2)}`, 14, y);
- doc.text(`Tax Withheld: $${tax.toFixed(2)}`, 14, y + 8);
- doc.text(`Net Pay: $${net.toFixed(2)}`, 14, y + 16);
- doc.save(`Weekly_Report_${startDateStr.replace(/\//g, '-')}.pdf`);
- }
- function addWeekEntry() {
- const rate = { base: 13.28, evening: 16.60, saturday: 16.60, sunday: 19.92 };
- const days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
- let total = 0;
- let breakdown = {};
- for (const day of days) {
- let base = getInput(`${day}_base`);
- let evening = getInput(`${day}_evening`);
- let sat = day === "sat" ? getInput(`${day}_saturday`) : 0;
- let sun = day === "sun" ? getInput(`${day}_sunday`) : 0;
- let hours = base + evening + sat + sun;
- let subtotal = base * rate.base + evening * rate.evening + sat * rate.saturday + sun * rate.sunday;
- if (hours > 8) subtotal -= 0.5 * rate.base;
- total += subtotal;
- breakdown[day.toUpperCase()] = subtotal;
- }
- const weekStart = new Date();
- weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1);
- const weekStartStr = weekStart.toLocaleDateString("en-AU");
- const notes = prompt("Add any notes for this week:");
- const tax = Math.round((total >= 355 ? (total <= 385 ? 0.19 * (total - 350)
- : total <= 432 ? 6.65 + 0.2342 * (total - 385)
- : total <= 538 ? 19.51 + 0.3477 * (total - 432)
- : total <= 999 ? 53.73 + 0.345 * (total - 538)
- : 207.97 + 0.39 * (total - 999)) : 0) * 100) / 100;
- const net = Math.round((total - tax) * 100) / 100;
- db.collection("users").doc(currentUser.uid).collection("entries").add({
- total,
- tax,
- net,
- notes,
- breakdown,
- weekStart: firebase.firestore.Timestamp.fromDate(weekStart),
- timestamp: new Date()
- }).then(() => {
- generatePDF(weekStartStr, notes, breakdown, total, tax, net);
- loadHistory();
- });
- }
- function loadHistory() {
- db.collection("users").doc(currentUser.uid).collection("entries")
- .orderBy("timestamp", "desc")
- .get()
- .then(snapshot => {
- const list = document.getElementById("history");
- list.innerHTML = "";
- let total = 0, count = 0;
- snapshot.forEach(doc => {
- const amount = doc.data().total;
- total += amount;
- count++;
- const li = document.createElement("li");
- li.textContent = `$${amount.toFixed(2)}`;
- list.appendChild(li);
- });
- document.getElementById("average").innerText = (total / count || 0).toFixed(2);
- });
- }
- function generateWeeklyPDF(total, net, tax, weekRange, notes) {
- const { jsPDF } = window.jspdf;
- const doc = new jsPDF();
- doc.setFontSize(14);
- doc.text("Weekly Pay Summary", 14, 20);
- doc.text(`Pay Period: ${weekRange}`, 14, 30);
- doc.text(`Gross Pay: $${total.toFixed(2)}`, 14, 40);
- doc.text(`Estimated Tax: $${tax.toFixed(2)}`, 14, 50);
- doc.text(`Net Pay: $${net.toFixed(2)}`, 14, 60);
- doc.text("Notes:", 14, 70);
- doc.text(notes, 14, 80);
- doc.save(`Weekly_Pay_Report_${weekRange.replace(/\//g, "-")}.pdf`);
- }
- function calculateTax(income) {
- const threshold = 18200;
- if (income <= threshold) return 0;
- const taxable = income - threshold;
- return taxable * 0.16 / 52; // Weekly tax based on annual taxable income
- }
+  const firebaseConfig = {
+    apiKey: "AIzaSyBOMK1trQZ5Ybaq11f6nx7_L1_vsdhvQnA",
+    authDomain: "pay-tracker-d6145.firebaseapp.com",
+    projectId: "pay-tracker-d6145",
+    storageBucket: "pay-tracker-d6145.firebasestorage.app",
+    messagingSenderId: "915657691207",
+    appId: "1:915657691207:web:d13bacb0e6044df875e162",
+    measurementId: "G-EE1G4QRWQV"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+  let currentUser = null;
+
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      currentUser = user;
+      document.getElementById("authSection").style.display = "none";
+      document.getElementById("trackerSection").style.display = "block";
+      loadHistory();
+    } else {
+      currentUser = null;
+      document.getElementById("authSection").style.display = "block";
+      document.getElementById("trackerSection").style.display = "none";
+    }
+  });
+
+  function login() {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    auth.signInWithEmailAndPassword(email, password)
+      .catch(err => document.getElementById("authMessage").innerText = err.message);
+  }
+
+  function register() {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    auth.createUserWithEmailAndPassword(email, password)
+      .catch(err => document.getElementById("authMessage").innerText = err.message);
+  }
+
+  function logout() {
+    auth.signOut();
+  }
+
+  function getInput(id) {
+    return parseFloat(document.getElementById(id)?.value || 0);
+  }
+
+  function calculateTax(weeklyPay) {
+    const annual = weeklyPay * 52;
+    const taxable = Math.max(0, annual - 18200);
+    const annualTax = taxable * 0.16;
+    return (annualTax / 52).toFixed(2);
+  }
+
+  function addWeekEntry() {
+    const rate = {
+      base: 13.28,
+      evening: 16.60,
+      saturday: 16.60,
+      sunday: 19.92
+    };
+
+    const days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+    let total = 0;
+
+    for (const day of days) {
+      let base = getInput(`${day}_base`);
+      let evening = getInput(`${day}_evening`);
+      let sat = day === "sat" ? getInput(`${day}_saturday`) : 0;
+      let sun = day === "sun" ? getInput(`${day}_sunday`) : 0;
+
+      const dayTotal = base + evening + sat + sun;
+      if (dayTotal > 8) base -= 0.5; // 30-min unpaid break
+      total += base * rate.base + evening * rate.evening + sat * rate.saturday + sun * rate.sunday;
+    }
+
+    const tax = parseFloat(calculateTax(total));
+    const net = total - tax;
+    const weekRange = document.getElementById("payPeriod").value;
+    const notes = document.getElementById("weekNotes").value;
+
+    db.collection("users").doc(currentUser.uid).collection("entries").add({
+      gross: total,
+      net: net,
+      tax: tax,
+      weekRange,
+      notes,
+      timestamp: new Date()
+    }).then(loadHistory);
+
+    generateWeeklyPDF(total, net, tax, weekRange, notes);
+  }
+
+  function generateWeeklyPDF(total, net, tax, weekRange, notes) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    doc.setFontSize(14);
+    doc.text("Weekly Pay Summary", 14, 20);
+    doc.text(`Pay Period: ${weekRange}`, 14, 30);
+    doc.text(`Gross Pay: $${total.toFixed(2)}`, 14, 40);
+    doc.text(`Estimated Tax: $${tax}`, 14, 50);
+    doc.text(`Net Pay: $${net.toFixed(2)}`, 14, 60);
+    doc.text(`Notes: ${notes}`, 14, 70);
+    doc.save(`Weekly_Pay_${weekRange.replace(/\//g, '-')}.pdf`);
+  }
+
+  function loadHistory() {
+    db.collection("users").doc(currentUser.uid).collection("entries")
+      .orderBy("timestamp", "desc")
+      .get()
+      .then(snapshot => {
+        const list = document.getElementById("history");
+        list.innerHTML = "";
+        let total = 0, count = 0;
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          total += data.gross;
+          count++;
+          const li = document.createElement("li");
+          li.innerHTML = `
+            <strong>${data.weekRange}</strong>: $${data.gross.toFixed(2)} (Net: $${data.net.toFixed(2)}, Tax: $${data.tax})
+            <button onclick="generateWeeklyPDF(${data.gross}, ${data.net}, ${data.tax}, '${data.weekRange}', '${data.notes}')">Download PDF</button>
+          `;
+          list.appendChild(li);
+        });
+        document.getElementById("average").innerText = (total / count || 0).toFixed(2);
+      });
+  }
 </script>
-<br/><button onclick="regeneratePDF()">Download This Week's PDF</button>
-<script>
- function regeneratePDF() {
- const total = parseFloat(document.getElementById("lastTotal")?.value || 0);
- const notes = prompt("Add notes for this week:");
- const weekRange = prompt("Enter pay period (DD/MM/YY - DD/MM/YY):");
- const tax = calculateTax(total * 52); // Annualized income
- const net = total - tax;
- generateWeeklyPDF(total, net, tax, weekRange, notes || "");
- }
- </script>
 </body>
 </html>
